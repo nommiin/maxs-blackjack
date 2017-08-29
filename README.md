@@ -1,5 +1,5 @@
 # max's blackjack
-[b]look ma, i know javascript![/b]
+***look ma, i know javascript!***
 
 its made for my box max, s/o to him
 
