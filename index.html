@@ -1,0 +1,164 @@
+<html>
+    <head>
+        <script type="text/javascript">
+            function randomRange(min, max) {
+                min = Math.ceil(min);
+                max = Math.floor(max);
+                return Math.floor(Math.random() * (max - min)) + min; //The maximum is exclusive and the minimum is inclusive
+            }
+
+            function gameInit() {
+                gameCardNames = ["2", "3", "4", "5", "6", "7", "8", "9", "A", "Q", "J", "K"];
+                gameCards = {
+                    "2": 2,
+                    "3": 3,
+                    "4": 4,
+                    "5": 5,
+                    "6": 6,
+                    "7": 7,
+                    "8": 8,
+                    "9": 9,
+                    "K": 10,
+                    "Q": 10,
+                    "J": 10,
+                    "A": -1
+                }
+
+                function gameObjectCreate() {
+                    this.SCORE = 0;
+                    this.STATE = 0;
+                    this.HAND = [];
+                }
+                
+                gameCurrentPlayer = 0;
+                gameObjects = [new gameObjectCreate(), new gameObjectCreate()];
+                for(var i = 0; i < gameObjects.length; i++) {
+                    var gameObject = gameObjects[i], gameText = document.createElement("h2");
+                    gameText.appendChild(document.createTextNode("Player #" + (i + 1).toString()));
+                    gameText.id = "gameText_" + i.toString();
+                    var gameHand = document.createElement("h3");
+                    gameHand.appendChild(document.createTextNode("Hand: " + gameObject.SCORE));
+                    gameHand.id = "gameHand_" + i.toString();
+                    var gameScore = document.createElement("h5");
+                    gameScore.appendChild(document.createTextNode("Score: " + gameObject.SCORE));
+                    gameScore.id = "gameScore_" + i.toString();
+                    document.getElementById("gameMain").appendChild(gameText);
+                    document.getElementById("gameMain").appendChild(gameHand);
+                    document.getElementById("gameMain").appendChild(gameScore);
+                    document.getElementById("gameMain").appendChild(document.createElement("hr"));
+                }
+                gameUpdate();
+            }
+
+            function gameGetCard() {
+                return gameCardNames[randomRange(0, gameCardNames.length)];
+            }
+
+            function gameGetScore(gameHand) {
+                var gameScore = 0, gameAces = 0;
+                // Count Score
+                gameHand.forEach(function (gameCard) {
+                        if (gameCards[gameCard] > -1) {
+                            gameScore += gameCards[gameCard];
+                        } else {gameAces++;}
+                    }
+                );
+
+                // Count Aces
+                for(var i = 0; i < gameAces; i++) {
+                    if ((gameScore + 11) < 21) {
+                        gameScore += 11;
+                    } else {
+                        gameScore += 1;
+                    }
+                }
+
+                return gameScore;
+            }
+
+            function gamePlay() {
+                gameObjects[gameCurrentPlayer].HAND.push(gameGetCard());
+                gameObjects[gameCurrentPlayer].SCORE = gameGetScore(gameObjects[gameCurrentPlayer].HAND);
+                if (gameObjects[gameCurrentPlayer].SCORE > 21) {
+                    gameObjects[gameCurrentPlayer].STATE = 1;
+                }
+                gameUpdate();
+            }
+
+            function gameStay() {
+                gameCurrentPlayer++;// = (gameCurrentPlayer + 1) % gameObjects.length;
+                if (gameCurrentPlayer < gameObjects.length) {
+                    gameUpdate();
+                } else {
+                    var gameWinner = gameFinish();
+                    document.getElementById("gameAlert").setAttribute("style", "display: block;");
+                    document.getElementById("gameAlertText").innerText = "Player #" + (gameWinner + 1).toString() + " has won!";
+                }
+            }
+
+            function gameFinish() {
+                var gameWinner = {PLAYER: -1, SCORE: -1}, gameWinners = [];
+                for(var i = 0; i < gameObjects.length; i++) {
+                    var gameObject = gameObjects[i];
+                    if (gameObject.SCORE < 21) {
+                        if (gameObject.SCORE > gameWinner.SCORE) {
+                            gameWinner.PLAYER = i;
+                            gameWinner.SCORE = gameObject.SCORE;
+                        }
+                    }
+                }
+                return gameWinner.PLAYER;
+            }
+
+            function gameUpdate() {
+                for(var i = 0; i < gameObjects.length; i++) {
+                    // Retrieve object
+                    var gameObject = gameObjects[i];
+
+                    // Display Text
+                    var gameText = document.getElementById("gameText_" + i.toString());
+                    gameText.innerText = "Player #" + (i + 1).toString();
+
+                    // Display Hand
+                    var gameHand = document.getElementById("gameHand_" + i.toString());
+                    gameHand.innerText = "Hand: " + gameObject.HAND.join(", ");
+
+                    // Display Hand
+                    var gameHand = document.getElementById("gameScore_" + i.toString());
+                    gameHand.innerText = "Score: " + gameObject.SCORE.toString();
+
+                    // Check scores
+                    if (gameObject.STATE == 1) {
+                        gameStay();
+                    }
+                }
+
+                // Buttons States
+                document.getElementById("play").disabled = (gameCurrentPlayer != 0);
+                document.getElementById("stay").disabled = (gameCurrentPlayer != 0);
+
+                // Bots
+                if (gameCurrentPlayer > 0 && gameCurrentPlayer < gameObjects.length) {
+                    if (gameObjects[gameCurrentPlayer].SCORE < 18) {
+                        gamePlay();
+                    } else {
+                        gameStay();
+                    }
+                }
+            }
+        </script>
+    </head>
+    <body onload="gameInit();">
+        <center>
+            <div id="gameAlert" style="display: none;">
+                <h1 id="gameAlertText"></h1>
+                <hr>
+            </div>
+            <div id="gameMain"></div>
+            <button id="play" onclick="gamePlay();">Play</button>
+            <button id="stay" onclick="gameStay();">Stay</button>
+            <br>
+            <button onclick="location.reload();">Replay</button>
+        </center>
+    </body>
+</html>
